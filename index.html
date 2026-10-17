@@ -236,6 +236,48 @@ html,body{
 .meta-badge.meta-grammar{font-size:10px;line-height:1.4}
 @media (max-width:640px){.word-meta{gap:4px}.meta-badge{font-size:10px;padding:2px 6px}.meta-badge.meta-grammar{font-size:9px}}
 
+/* ===== Mobile adaptation ===== */
+@media (max-width:768px){
+  .top-bar{gap:6px;padding:0 10px;height:48px}
+  .top-bar .brand{font-size:15px}
+  .top-bar .brand .tagline{display:none}
+  .tab-btn{padding:5px 8px;font-size:11px}
+  .search-wrap{max-width:none;flex:1}
+  .search-wrap input{padding:8px 28px 8px 30px;font-size:14px} /* ≥16px to avoid iOS zoom */
+  .progress-tag{padding:4px 8px;font-size:10px}
+  .feature-toggle{padding:5px 8px;font-size:11px}
+  .feature-toggle .txt, .feature-toggle{font-size:11px}
+
+  .col-words{width:200px}
+  .toggle-btn{top:56px;width:28px;height:28px;font-size:12px;opacity:0.85}
+
+  .card-top{padding:12px 16px}
+  .card-center{margin:8px 10px;padding:24px 20px;max-height:calc(100% - 16px);border-radius:var(--radius-md)}
+  .card-center .english{font-size:clamp(2rem,9vw,2.8rem)}
+  .card-center .ipa{font-size:1rem;margin-bottom:1.2rem}
+  .card-center .chinese{font-size:1.1rem;margin-bottom:1.6rem}
+  .card-center .example{padding-top:1.2rem}
+  .card-bottom{padding:10px 12px;gap:8px}
+  .author-tag{display:none}
+  .progress-dots{max-width:calc(100vw - 32px)}
+
+  .phrase-view{padding:14px 14px}
+  .phrase-header h2{font-size:18px}
+  .phrase-item{padding:10px 12px}
+  .phrase-item .p-en{font-size:14px}
+  .phrase-item .p-zh{font-size:12px;min-width:90px}
+}
+@media (max-width:480px){
+  .col-words{width:170px}
+  .card-center{margin:6px 6px;padding:20px 14px}
+  .progress-dots .dot{width:4px;height:5px} /* taller tap-friendly dots */
+}
+/* Phones: comfortable touch targets */
+@media (pointer:coarse) and (max-width:768px){
+  .wl-item{padding:10px 12px}
+  .tab-btn{padding:7px 10px}
+}
+
 @media (prefers-reduced-motion:reduce){
   .bg-aurora{animation:none!important;background:linear-gradient(135deg,hsl(220,40%,90%),hsl(340,40%,92%))!important;opacity:0.5!important}
   .toggle-btn,.meta-badge,.progress-dots .dot,.fav-btn,.tab-btn,.phrase-cat-btn,.feature-toggle{transition:none!important}
@@ -608,6 +650,18 @@ function showWord(fi) {
   var w = DATA[fw.catIdx].words[fw.wordIdx];
   var meta = getMeta(fw.globalIdx);
 
+  /* On phones, collapse the sidebar on word select so the card uses full width */
+  try {
+    if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+      var sb = document.getElementById('sidebar');
+      if (sb && !sb.classList.contains('collapsed')) {
+        sb.classList.add('collapsed');
+        var tbBtn = document.getElementById('toggleSidebar');
+        if (tbBtn) { tbBtn.textContent = '>'; tbBtn.classList.add('left-shifted'); }
+      }
+    }
+  } catch(e) {}
+
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('card').style.display = 'flex';
 
@@ -952,14 +1006,22 @@ function initApp() {
   tb.appendChild(favTab);
 
 
-  /* Sidebar state */
+  /* Sidebar state — on phones start collapsed so the card is the hero */
+  var isPhone = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
   try {
-    if (localStorage.getItem('toeic_sidebar') === '1') {
+    var savedCollapsed = localStorage.getItem('toeic_sidebar');
+    if (savedCollapsed === '1' || (isPhone && savedCollapsed !== '0')) {
       document.getElementById('sidebar').classList.add('collapsed');
       document.getElementById('toggleSidebar').textContent = '>';
       document.getElementById('toggleSidebar').classList.add('left-shifted');
     }
-  } catch(e) {}
+  } catch(e) {
+    if (isPhone) {
+      document.getElementById('sidebar').classList.add('collapsed');
+      document.getElementById('toggleSidebar').textContent = '>';
+      document.getElementById('toggleSidebar').classList.add('left-shifted');
+    }
+  }
 
   switchTab(-1);
   showWord(0);
